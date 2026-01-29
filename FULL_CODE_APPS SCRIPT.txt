@@ -1,0 +1,93 @@
+// ============================================
+// Main function: handle ESP32 GET request
+// ============================================
+function doGet(e) {
+
+  // ===== DEBUG SAFETY =====
+  if (typeof e === 'undefined') {
+    e = {
+      parameter: {
+        sts: "write",
+        srs: "OK",
+        temp: "30",
+        humd: "70",
+        swtc1: "ON",
+        swtc2: "OFF",
+        soil: "2000",
+        height: "12"
+      }
+    };
+  }
+
+  var sheet_id = '1O5rdEHPv_VUIlthdFadlE9EY3_ATJfsdd7dP2Y4_VyI';
+  var sheet_name = "ESP32_Google_Sheets_Sheet";
+  var sheet = SpreadsheetApp.openById(sheet_id).getSheetByName(sheet_name);
+
+  var newRow = sheet.getLastRow() + 1;
+
+  // ===== 10 Kolum (A - J) =====
+  var rowDataLog = new Array(10);
+
+  var Curr_Date = Utilities.formatDate(new Date(), "Asia/Kuala_Lumpur", 'dd/MM/yyyy');
+  var Curr_Time = Utilities.formatDate(new Date(), "Asia/Kuala_Lumpur", 'HH:mm:ss');
+
+  rowDataLog[0] = Curr_Date; // A
+  rowDataLog[1] = Curr_Time; // B
+
+  var sts_val = "";
+  var height_val = 0;
+
+  for (var param in e.parameter) {
+    var value = stripQuotes(e.parameter[param]);
+    switch (param) {
+      case 'sts': sts_val = value; break;
+      case 'srs': rowDataLog[2] = value; break;
+      case 'temp': rowDataLog[3] = value; break;
+      case 'humd': rowDataLog[4] = value; break;
+      case 'swtc1': rowDataLog[5] = value; break;
+      case 'swtc2': rowDataLog[6] = value; break;
+      case 'soil': rowDataLog[7] = value; break;
+      case 'height':
+        height_val = parseFloat(value);
+        rowDataLog[8] = height_val; // I
+        break;
+    }
+  }
+
+  // ===== KIRA TINGGI & KELAS =====
+  var plantHeight = 37 - height_val;
+  var plantClass = "";
+
+  if (plantHeight < 3) {
+    plantClass = "Anak benih";
+  } else if (plantHeight < 7) {
+    plantClass = "Membesar";
+  } else {
+    plantClass = "Matang";
+  }
+
+  rowDataLog[9] = plantClass; // J
+
+  // ===== WRITE DATA =====
+  if (sts_val == 'write') {
+    sheet.getRange(newRow, 1, 1, rowDataLog.length)
+         .setValues([rowDataLog]);
+
+    return ContentService.createTextOutput("Write Success");
+  }
+
+  // ===== READ DATA =====
+  if (sts_val == 'read') {
+    var allData = sheet.getRange('A2:J' + sheet.getLastRow()).getValues();
+    return ContentService.createTextOutput(JSON.stringify(allData));
+  }
+
+  return ContentService.createTextOutput("No valid sts parameter");
+}
+
+// ============================================
+// Utility function
+// ============================================
+function stripQuotes(value) {
+  return value.replace(/^["']|['"]$/g, "");
+}

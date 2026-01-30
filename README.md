@@ -30,7 +30,7 @@ The system also integrates automated irrigation using a water pump controlled ba
 
 - Software & Platform: Arduino IDE, Blynk application, Google Sheets
 
- -AI Module: Data-driven analysis and prediction model
+- AI Module: Data-driven analysis and prediction model
 
 ⚙️ Applications
 
